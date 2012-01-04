@@ -14,7 +14,7 @@ var app = express.createServer();
 */
 
 
-var APP_PORT = 3000;
+var APP_PORT = process.env.PORT || 3000;
 
 console.log('\n========================================\n')
 console.log('Development Preview Server\nDO NOT USE IN PRODUCTION!!!\n');
@@ -42,7 +42,7 @@ app.use('/_proxy/', function(req, res, next){
     	res.write(err);
     	res.end();
   	} else {
-          console.log("PROXY Request: " + url_parts.hostname + ", port: " + (url_parts.port ? url_parts.port : 80) + ", path: " + url_parts.path);
+          console.log("PROXY Request: " + url_parts.hostname + ", port: " + (url_parts.port ? url_parts.port : 80) + ", path: " + (url_parts.path ? url_parts.path : url_parts.pathname));
 
           // Create and configure the proxy.
 
@@ -54,12 +54,13 @@ app.use('/_proxy/', function(req, res, next){
               }
           });
 
-          //var proxy = new httpProxy.RoutingProxy();
           // Rewrite the URL on the request to remove the /proxy/ prefix.
           // Then pass along to the proxy.
 
-          req.url = url_parts.path;
+          // Heroku's version of http-proxy requires the use of 'pathname' instead of 'path'
+          req.url = (url_parts.path ? url_parts.path : url_parts.pathname);
           req.headers['host']=url_parts.host;  // Reset the host header to the destination host.
+
           proxy.proxyRequest(req, res);
 
 	} // end if-else
